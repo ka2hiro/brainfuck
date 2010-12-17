@@ -1,0 +1,84 @@
+<mt:setvarblock name="code">+++++++++[#++++++++#+++++++++++#+++++***-]#.#++.+++++++..+++.#-.------------.*++++++++.--------.+++.------.--------.#+.</mt:setvarblock>
+<mt:setvartemplate name="getchar">
+<mt:setvarblock name="pattern">/(?:.{<mt:var name="pc" />})(.)(?:.*)/</mt:setvarblock>
+<mt:var name="code" regex_replace="$pattern","\1" setvar="c"/>
+</mt:setvartemplate>
+
+<mt:setvartemplate name="run">
+<mt:setvar name="level" value="0" />
+<mt:setvar name="pc" value="0" />
+<mt:setvar name="ptr" value="0" />
+<mt:setvar name="memory[0]" value="0" />
+<mt:setvar name="output" value="" />
+<mt:for var="step" from="0" to="$step_end">
+  <mt:var name="getchar" />
+  <mt:if name="c" eq="+">
+    <mt:setvar name="memory" index="$ptr" value="1" op="+" />
+  <mt:elseif eq="-">
+    <mt:setvar name="memory" index="$ptr" value="1" op="-" />
+  <mt:elseif eq="#">
+    <mt:setvar name="ptr" op="++" />
+  <mt:elseif eq="*">
+    <mt:setvar name="ptr" op="--" />
+  <mt:elseif eq="[">
+    <mt:setvar name="level" op="++" />
+    <mt:var name="table" index="$level" setvar="entry" />
+    <mt:var name="memory" index="$ptr" setvar="ptr_value" />
+    <mt:if name="ptr_value" eq="0">
+      <mt:var name="entry{end}" setvar="pc" />
+      <mt:var name="pc" op="++" />
+    </mt:if>
+  <mt:elseif eq="]">
+    <mt:var name="table" index="$level" setvar="entry" />
+    <mt:var name="memory" index="$ptr" setvar="ptr_value" />
+    <mt:if name="ptr_value" ne="0">
+      <mt:var name="entry{begin}" setvar="pc" />
+    <mt:else>
+      <mt:setvar name="level" op="--" />
+    </mt:if>
+  <mt:elseif eq=".">
+    <mt:setvarblock name="output" append="1"><mt:var name="memory" index="$ptr" sprintf="%c" /></mt:setvarblock>
+  <mt:else>
+  </mt:if>
+  <mt:setvar name="pc" op="++" />
+</mt:for>
+</mt:setvartemplate>
+
+<mt:setvartemplate name="init_table">
+<mt:setvar name="level" value="0" />
+<mt:for var="pc" from="0" to="$pc_end">
+  <mt:var name="getchar" />
+  <mt:if name="c" eq="[">
+    <mt:setvar name="level" op="++" />
+    <mt:setvar name="entry" key="begin" value="$pc" />
+    <mt:setvar name="table" index="$level" value="$entry" />
+    <mt:var name="pc" />
+  <mt:elseif eq="]">
+    <mt:var name="table" index="$level" setvar="entry" />
+    <mt:var name="entry" key="end" value="$pc" />
+    <mt:setvar name="level" op="--" />
+    <mt:var name="pc" />
+  </mt:if>
+</mt:for>
+<mt:if name="level" gt="0">
+<mt:setvarblock name="error">missing close code</mt:setvarblock>
+<mt:elseif lt="0">
+<mt:setvarblock name="error">too much close code</mt:setvarblock>
+</mt:if>
+</mt:setvartemplate>
+
+<mt:setvar name="memory[0]" value="0" />
+<mt:setvar name="ptr" value="0" />
+<mt:setvar name="output" value="" />
+<mt:var name="code" count_characters="1" setvar="length" />
+<mt:setvar name="pc_end" value="$length" op="--" />
+<mt:setvar name="step_end" value="600" />
+
+<mt:var name="init_table" setvar="res" />
+<mt:if name="error">
+<mt:var name="error" />
+<mt:else>
+<mt:var name="run" setvar="res" />
+<mt:var name="res" trim="1" />
+<mt:var name="output" />
+</mt:if>
